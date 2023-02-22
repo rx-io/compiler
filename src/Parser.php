@@ -6,8 +6,7 @@ class Parser {
 
   public function __construct(
     private array $operators,
-    private array $groupStart,
-    private array $groupEnd,
+    private array $groupLimiters,
   ){}
 
   /**
@@ -16,7 +15,7 @@ class Parser {
    */
   public function parse(array $tokens){
 
-    // poor man's endless loop prevention (super risky, yikes)
+    // poor man's endless recursive loop prevention (super risky, yikes)
     if(count($tokens) <= 1){
       return null;
     }
@@ -25,8 +24,7 @@ class Parser {
     $left = [];
     $right = [];
   
-    foreach($this->operators as $operator){
-      list($operatorType, $operatorLabel) = $operator;
+    foreach($this->operators as list($operatorType, $operatorSymbol)){
 
       $op = null;
       $left = [];
@@ -35,16 +33,17 @@ class Parser {
       $tokensBuffer = [...$tokens];
       while($token = array_shift($tokensBuffer)){
 
-        list($groupStartType, $groupStartLabel) = $this->groupStart;
-        if($token->type === $groupStartType && $token->value === $groupStartLabel){
-          list($groupLeft, $groupRight) = $this->extractGroup($tokensBuffer, $this->groupStart, $this->groupEnd);
-          $left = $groupLeft;
-          $tokensBuffer = $groupRight;
-          continue;
+        foreach($this->groupLimiters as list($groupStart, $groupEnd)){
+          if($token->type === $groupStart){
+            list($groupLeft, $groupRight) = $this->extractGroup($tokensBuffer, $groupStart, $groupEnd);
+            $left = $groupLeft;
+            $tokensBuffer = $groupRight;
+            continue 2;
+          }
         }
   
         if(!$op){
-          if($token->type === $operatorType && $token->value === $operatorLabel){
+          if($token->type === $operatorType && $token->value === $operatorSymbol){
             $op = $token;
           } else {
             $left[] = $token;
@@ -75,13 +74,13 @@ class Parser {
    * @param array $groupEnd
    * @return int|null
    */
-  private function findEndOfGroupIndex(array $tokens, array $groupStart, array $groupEnd): int | null {
+  private function findEndOfGroupIndex(array $tokens, string $groupStart, string $groupEnd): int | null {
     $depth = 0;
     foreach($tokens as $index => $token){
-      if($token->type === $groupStart[0] && $token->value === $groupStart[1]){
+      if($token->type === $groupStart){
         $depth++;
       }
-      if($token->type === $groupEnd[0] && $token->value === $groupEnd[1]){
+      if($token->type === $groupEnd){
         if($depth !== 0){
           $depth--;
         } else {
@@ -94,11 +93,11 @@ class Parser {
 
   /**
    * @param array $tokens
-   * @param array $groupStart
-   * @param array $groupEnd
+   * @param string $groupStart
+   * @param string $groupEnd
    * @return array
    */
-  private function extractGroup(array $tokens, array $groupStart, array $groupEnd): array {
+  private function extractGroup(array $tokens, string $groupStart, string $groupEnd): array {
     $lastIndex = $this->findEndOfGroupIndex($tokens, $groupStart, $groupEnd);
     if($lastIndex === null){
       return [ [], $tokens ];

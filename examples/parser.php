@@ -22,12 +22,10 @@ $tokens = $lexer->scan('($number in [1,"2",3] or $model eq 5678) and $name eq "f
 $tokens = array_values(array_filter($tokens, fn($token) => $token->type !== 'T_SPACE'));
 printf("--- TOKENS ---\n\n%s\n\n", json_encode($tokens, JSON_PRETTY_PRINT));
 
-
 $parser = new Parser([
   ...array_map(fn(string $op) => [ 'T_OPERATOR', $op ], explode('|', 'or|and|eq|neq|gt|gte|lt|lte|in')),
-],
-  ['T_BRACE_START', '('],
-  ['T_BRACE_END', ')'],
-);
+], [
+  ['T_BRACE_START', 'T_BRACE_END'],
+]);
 $tree = $parser->parse($tokens);
 printf("--- AST ---\n\n%s\n\n", json_encode($tree, JSON_PRETTY_PRINT));
