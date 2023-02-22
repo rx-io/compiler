@@ -1,0 +1,12 @@
+{
+  "name": "rx-io/compiler",
+  "description": "Simple Lexer, Parser and Evaluator for PHP",
+  "require": {
+    "php": ">=8.2"
+  },
+  "autoload": {
+    "psr-4": {
+      "Rx0\\Compiler\\": "src/"
+    }
+  }
+}
