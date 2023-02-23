@@ -11,7 +11,7 @@ class Parser {
 
   /**
    * @param array $tokens
-   * @return void
+   * @return \stdClass
    */
   public function parse(array $tokens){
 
@@ -62,8 +62,8 @@ class Parser {
     return (object)[
       'token' => $op,
       'nodes' => [
-        $this->parse($left) ?? $left,
-        $this->parse($right) ?? $right,
+        $this->parse($left) ?? (object)[ 'token' => $left[0] ?? null, 'nodes' => [] ],
+        $this->parse($right) ?? (object)[ 'token' => $right[0] ?? null, 'nodes' => [] ],
       ],
     ];
   }
